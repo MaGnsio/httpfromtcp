@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 )
 
 var crlf = []byte("\r\n")
 
-const bufferSize = 32
+const bufferSize = 1024
 
 var (
 	ErrorMalformedRequestLine = fmt.Errorf("malformed request-line")
@@ -38,12 +39,6 @@ func (rl *RequestLine) ValidMethod() bool {
 type Request struct {
 	RequestLine
 	state parserState
-}
-
-func newRequest() *Request {
-	return &Request{
-		state: StateInit,
-	}
 }
 
 func (r *Request) parse(data []byte) (int, error) {
@@ -77,14 +72,20 @@ func (r *Request) Done() bool {
 }
 
 func RequestFromReader(reader io.Reader) (*Request, error) {
-	request := newRequest()
+	request := &Request{
+		state: StateInit,
+	}
 
 	// NOTE: buffer could exceed available memory for very large requests.
 	buf, bufLen := make([]byte, bufferSize), 0
 	for !request.Done() {
 		// reading into the buffer
 		n, err := reader.Read(buf[bufLen:])
-
+		log.Printf("Read %d bytes, error: %v\n", n, err)
+		if n == 0 {
+			request.state = StateDone
+			break
+		}
 		if err != nil {
 			return nil, err
 		}

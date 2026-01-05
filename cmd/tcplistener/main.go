@@ -9,19 +9,18 @@ import (
 
 func main() {
 	listener, err := net.Listen("tcp", ":42069")
-
 	if err != nil {
 		log.Fatal("File not found, ", err)
 	}
-
 	log.Printf("Listening on %s\n", listener.Addr().String())
 
 	for {
 		conn, err := listener.Accept()
-		log.Printf("Accepted connection from %s\n", conn.RemoteAddr().String())
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Printf("Accepted connection from %s\n", conn.RemoteAddr().String())
+
 		r, err := request.RequestFromReader(conn)
 		if err != nil {
 			log.Printf("Error parsing request: %v", err)
